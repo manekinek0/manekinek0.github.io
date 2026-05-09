@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material Weather</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-seed: #4285f4;
+            --surface: #f8f9ff;
+            --on-surface: #1a1c1e;
+            --primary-container: rgba(66, 133, 244, 0.15);
+            --on-primary-container: #00154e;
+            --secondary-container: #e1e2ec;
+            --surface-variant: #e1e2ec;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --surface: #1a1c1e;
+            --on-surface: #e2e2e6;
+            --on-primary-container: #dce1ff;
+            --secondary-container: #2f3033;
+            --surface-variant: #44474f;
+        }
+
+        body {
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            margin: 0;
+            padding: 20px;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container { width: 100%; max-width: 500px; position: relative; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .controls { display: flex; gap: 10px; }
+
+        button.icon-btn {
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: var(--secondary-container);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--on-surface);
+        }
+
+        .palette-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: var(--surface-variant);
+            padding: 16px;
+            border-radius: 28px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            z-index: 100;
+            transform: scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+            transform-origin: top right;
+        }
+
+        .palette-menu.active { transform: scale(1); opacity: 1; pointer-events: all; }
+
+        .color-dot {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .custom-color-wrapper {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, red, #ff0, lime, aqua, blue, #f0f, red);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #custom-color-btn {
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            cursor: pointer; opacity: 0;
+        }
+
+        .weather-card {
+            background: var(--primary-container);
+            color: var(--on-primary-container);
+            padding: 40px 32px;
+            border-radius: 32px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            transition: background 0.4s ease;
+        }
+
+        .temp { font-size: 88px; font-weight: 700; margin: 5px 0; letter-spacing: -4px; }
+        
+        .source-select {
+            background: rgba(128,128,128,0.15);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 10px 20px;
+            border-radius: 16px;
+            color: inherit;
+            font-family: inherit;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            outline: none;
+        }
+
+        .forecast-item {
+            background: var(--secondary-container);
+            padding: 18px 24px;
+            border-radius: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .forecast-info { display: flex; align-items: center; gap: 15px; }
+        .forecast-icon { font-size: 24px; }
+        .forecast-date { font-weight: 500; min-width: 60px; }
+
+        .loading { opacity: 0.5; animation: pulse 1.5s infinite; text-align: center; padding: 40px; }
+        @keyframes pulse { 50% { opacity: 0.2; } }
+    </style>
+</head>
+<body data-theme="light">
+
+<div class="container">
+    <div class="header">
+        <h2 id="current-city" style="margin: 0;">Определение...</h2>
+        <div class="controls">
+            <button class="icon-btn" onclick="togglePalette(event)">🎨</button>
+            <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
+            <div class="palette-menu" id="palette">
+                <div class="color-dot" style="background: #FF0000" onclick="setAccent('#FF0000')"></div>
+                <div class="color-dot" style="background: #D4FF00" onclick="setAccent('#D4FF00')"></div>
+                <div class="color-dot" style="background: #FF7B00" onclick="setAccent('#FF7B00')"></div>
+                <div class="color-dot" style="background: #FFDD00" onclick="setAccent('#FFDD00')"></div>
+                <div class="color-dot" style="background: #11FF00" onclick="setAccent('#11FF00')"></div>
+                <div class="color-dot" style="background: #00FFEE" onclick="setAccent('#00FFEE')"></div>
+                <div class="color-dot" style="background: #001EFF" onclick="setAccent('#001EFF')"></div>
+                <div class="color-dot" style="background: #AE00FF" onclick="setAccent('#AE00FF')"></div>
+                <div class="color-dot" style="background: #FF004C" onclick="setAccent('#FF004C')"></div>
+                <div class="color-dot" style="background: #000000" onclick="setAccent('#000000')"></div>
+                <div class="color-dot" style="background: #FFFFFF" onclick="setAccent('#FFFFFF')"></div>
+                <div class="custom-color-wrapper"><input type="color" id="custom-color-btn" oninput="setAccent(this.value)"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="weather-card">
+        <select class="source-select" id="source" onchange="saveAndFetch()">
+            <option value="openmeteo">Open-Meteo</option>
+            <option value="yandex">Яндекс Погода</option>
+            <option value="accuweather">AccuWeather</option>
+        </select>
+        <div class="temp" id="current-temp">--°</div>
+        <div id="weather-desc" style="font-weight: 500; margin-bottom: 8px; font-size: 20px;">Загрузка...</div>
+        <div style="font-size: 13px; opacity: 0.5" id="coords-display"></div>
+    </div>
+
+    <h3>Прогноз на 10 дней</h3>
+    <div id="forecast"></div>
+</div>
+
+<script>
+    const KEYS = {
+        yandex: '33cd5edb-414a-452f-9e7e-0dd0e851f159',
+        accu: 'zpka_037982925b6d47d082834529273794bf_302056d7'
+    };
+
+    let userCoords = { lat: 0, lon: 0 };
+    const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
+
+    // СЛОВАРЬ ИКОНОК
+    const weatherIcons = {
+        clear: "☀️",
+        "partly-cloudy": "🌤️",
+        cloudy: "⛅",
+        overcast: "☁️",
+        rain: "🌧️",
+        snow: "❄️",
+        thunderstorm: "⛈️",
+        drizzle: "🌦️",
+        fog: "🌫️"
+    };
+
+    const wmoCodes = {
+        0: { text: "Ясно", icon: "☀️" },
+        1: { text: "Преимущественно ясно", icon: "🌤️" },
+        2: { text: "Переменная облачность", icon: "⛅" },
+        3: { text: "Пасмурно", icon: "☁️" },
+        45: { text: "Туман", icon: "🌫️" },
+        61: { text: "Дождь", icon: "🌧️" },
+        95: { text: "Гроза", icon: "⛈️" }
+    };
+
+    const yandexMap = {
+        "clear": ["ясно", "☀️"],
+        "partly-cloudy": ["малооблачно", "🌤️"],
+        "cloudy": ["облачно с прояснениями", "⛅"],
+        "overcast": ["пасмурно", "☁️"],
+        "light-rain": ["небольшой дождь", "🌧️"],
+        "rain": ["дождь", "🌧️"],
+        "heavy-rain": ["сильный дождь", "🌧️"],
+        "showers": ["ливень", "🚿"],
+        "light-snow": ["небольшой снег", "🌨️"],
+        "snow": ["снег", "❄️"],
+        "thunderstorm": ["гроза", "⛈️"]
+    };
+
+    function initSettings() {
+        const savedTheme = localStorage.getItem('weather-theme') || 'light';
+        const savedColor = localStorage.getItem('weather-accent') || '#4285f4';
+        const savedSource = localStorage.getItem('weather-source') || 'openmeteo';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-btn').innerText = savedTheme === 'light' ? '☀️' : '🌙';
+        document.getElementById('source').value = savedSource;
+        setAccent(savedColor, false);
+    }
+
+    function togglePalette(e) { e.stopPropagation(); document.getElementById('palette').classList.toggle('active'); }
+    window.onclick = () => document.getElementById('palette').classList.remove('active');
+
+    function toggleTheme() {
+        const current = document.body.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        document.getElementById('theme-btn').innerText = next === 'light' ? '☀️' : '🌙';
+        localStorage.setItem('weather-theme', next);
+        setAccent(localStorage.getItem('weather-accent') || '#4285f4', false);
+    }
+
+    function setAccent(color, save = true) {
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        document.documentElement.style.setProperty('--primary-container', color + (isDark ? '40' : '26'));
+        document.documentElement.style.setProperty('--primary-seed', color);
+        if(save) localStorage.setItem('weather-accent', color);
+    }
+
+    function saveAndFetch() { localStorage.setItem('weather-source', document.getElementById('source').value); fetchWeather(); }
+
+    window.onload = () => {
+        initSettings();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async position => {
+                userCoords.lat = position.coords.latitude;
+                userCoords.lon = position.coords.longitude;
+                document.getElementById('coords-display').innerText = `${userCoords.lat.toFixed(4)}°N, ${userCoords.lon.toFixed(4)}°E`;
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userCoords.lat}&lon=${userCoords.lon}`);
+                    const data = await res.json();
+                    document.getElementById('current-city').innerText = data.address.city || data.address.town || "Мой город";
+                } catch(e) { document.getElementById('current-city').innerText = "Местоположение"; }
+                fetchWeather();
+            });
+        }
+    };
+
+    async function fetchWeather() {
+        const source = document.getElementById('source').value;
+        document.getElementById('forecast').innerHTML = '<div class="loading">Обновление...</div>';
+        try {
+            if (source === 'openmeteo') await fetchOpenMeteo();
+            if (source === 'yandex') await fetchYandex();
+            if (source === 'accuweather') await fetchAccuWeather();
+        } catch (e) { document.getElementById('weather-desc').innerText = "Ошибка API"; }
+    }
+
+    async function fetchOpenMeteo() {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userCoords.lat}&longitude=${userCoords.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=10`;
+        const data = await (await fetch(url)).json();
+        const current = wmoCodes[data.current.weather_code] || { text: "Ясно", icon: "☀️" };
+        updateUI(Math.round(data.current.temperature_2m), capitalize(current.text), data.daily.time.map((t, i) => ({
+            day: new Date(t).toLocaleDateString('ru', {weekday: 'short', day: 'numeric'}),
+            max: Math.round(data.daily.temperature_2m_max[i]), min: Math.round(data.daily.temperature_2m_min[i]),
+            icon: (wmoCodes[data.daily.weather_code[i]] || { icon: "☀️" }).icon
+        })));
+    }
+
+    async function fetchYandex() {
+        const res = await fetch(`https://api.weather.yandex.ru/v2/forecast?lat=${userCoords.lat}&lon=${userCoords.lon}`, { headers: { 'X-Yandex-API-Key': KEYS.yandex }});
+        const data = await res.json();
+        const mainCond = yandexMap[data.fact.condition] || [data.fact.condition, "⛅"];
+        updateUI(data.fact.temp, capitalize(mainCond[0]), data.forecasts.map(f => {
+            const dayCond = yandexMap[f.parts.day.condition] || ["облачно", "⛅"];
+            return {
+                day: new Date(f.date).toLocaleDateString('ru', {weekday: 'short', day: 'numeric'}),
+                max: f.parts.day.temp_max, min: f.parts.night.temp_min, icon: dayCond[1]
+            };
+        }));
+    }
+
+    async function fetchAccuWeather() {
+        const locRes = await fetch(`https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=${KEYS.accu}&q=${userCoords.lat},${userCoords.lon}&language=ru-ru`);
+        const locData = await locRes.json();
+        const currentRes = await fetch(`https://dataservice.accuweather.com/currentconditions/v1/${locData.Key}?apikey=${KEYS.accu}&language=ru-ru`);
+        const currentData = await currentRes.json();
+        const forecastRes = await fetch(`https://dataservice.accuweather.com/forecasts/v1/daily/5day/${locData.Key}?apikey=${KEYS.accu}&metric=true&language=ru-ru`);
+        const forecastData = await forecastRes.json();
+
+        const getAccuIcon = (id) => {
+            if (id <= 4) return "☀️"; if (id <= 6) return "🌤️"; if (id <= 11) return "☁️";
+            if (id <= 18) return "🌧️"; if (id <= 29) return "❄️"; return "⛅";
+        };
+
+        updateUI(Math.round(currentData[0].Temperature.Metric.Value), capitalize(currentData[0].WeatherText), forecastData.DailyForecasts.map(f => ({
+            day: new Date(f.Date).toLocaleDateString('ru', {weekday: 'short', day: 'numeric'}),
+            max: Math.round(f.Temperature.Maximum.Value), min: Math.round(f.Temperature.Minimum.Value),
+            icon: getAccuIcon(f.Day.Icon)
+        })));
+    }
+
+    function updateUI(temp, desc, forecast) {
+        document.getElementById('current-temp').innerText = `${temp}°`;
+        document.getElementById('weather-desc').innerText = desc;
+        document.getElementById('forecast').innerHTML = forecast.map(f => `
+            <div class="forecast-item">
+                <div class="forecast-info"><span class="forecast-icon">${f.icon}</span><span class="forecast-date">${f.day}</span></div>
+                <span><b>${f.max}°</b> / <span style="opacity:0.5">${f.min}°</span></span>
+            </div>
+        `).join('');
+    }
+</script>
+</body>
+</html>
