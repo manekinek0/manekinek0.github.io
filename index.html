@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Material Weather</title>
     
-    <!-- Иконка ⛅ для всех платформ -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛅</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛅</text></svg>">
 
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --primary-seed: #4285f4;
@@ -50,6 +50,15 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
+            padding: 0 10px;
+        }
+
+        #current-city { 
+            font-size: 1.2rem; 
+            font-weight: 500; 
+            margin: 0; 
+            max-width: 70%; 
+            line-height: 1.2;
         }
 
         .controls { display: flex; gap: 10px; position: relative; }
@@ -126,7 +135,6 @@
             border-radius: 32px;
             text-align: center;
             margin-bottom: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
             transition: background 0.4s ease;
         }
 
@@ -162,13 +170,15 @@
 
         .loading { opacity: 0.5; animation: pulse 1.5s infinite; text-align: center; padding: 40px; }
         @keyframes pulse { 50% { opacity: 0.2; } }
+        
+        h3 { margin-left: 12px; font-weight: 500; }
     </style>
 </head>
 <body data-theme="light">
 
 <div class="container">
     <div class="header">
-        <h2 id="current-city" style="margin: 0;">Определение...</h2>
+        <h2 id="current-city">Определение...</h2>
         <div class="controls">
             <button class="icon-btn" onclick="togglePalette(event)">🎨</button>
             <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
@@ -203,36 +213,44 @@
         <div style="font-size: 13px; opacity: 0.5" id="coords-display"></div>
     </div>
 
-    <h3 style="margin-left: 12px;">Прогноз на 10 дней</h3>
+    <h3>Прогноз на 10 дней</h3>
     <div id="forecast"></div>
 </div>
 
 <script>
+    // --- КОНФИГУРАЦИЯ ---
     const KEYS = {
         yandex: '33cd5edb-414a-452f-9e7e-0dd0e851f159',
         accu: 'zpka_037982925b6d47d082834529273794bf_302056d7'
     };
 
     let userCoords = { lat: 0, lon: 0 };
+    
     const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
 
+    // Справочники состояний
     const wmoCodes = {
-        0: { text: "Ясно", icon: "☀️" },
-        1: { text: "Преимущественно ясно", icon: "🌤️" },
-        2: { text: "Переменная облачность", icon: "⛅" },
-        3: { text: "Пасмурно", icon: "☁️" },
-        45: { text: "Туман", icon: "🌫️" },
-        61: { text: "Дождь", icon: "🌧️" },
-        95: { text: "Гроза", icon: "⛈️" }
+        0: { text: "Ясно", icon: "☀️" }, 1: { text: "Преимущественно ясно", icon: "🌤️" },
+        2: { text: "Переменная облачность", icon: "⛅" }, 3: { text: "Пасмурно", icon: "☁️" },
+        45: { text: "Туман", icon: "🌫️" }, 61: { text: "Дождь", icon: "🌧️" },
+        80: { text: "Ливень", icon: "🚿" }, 95: { text: "Гроза", icon: "⛈️" }
     };
 
     const yandexMap = {
-        "clear": ["ясно", "☀️"], "partly-cloudy": ["малооблачно", "🌤️"], "cloudy": ["облачно с прояснениями", "⛅"],
-        "overcast": ["пасмурно", "☁️"], "light-rain": ["небольшой дождь", "🌧️"], "rain": ["дождь", "🌧️"],
-        "heavy-rain": ["сильный дождь", "🌧️"], "showers": ["ливень", "🚿"], "light-snow": ["небольшой снег", "🌨️"],
-        "snow": ["снег", "❄️"], "thunderstorm": ["гроза", "⛈️"]
+        "clear": ["ясно", "☀️"], "partly-cloudy": ["малооблачно", "🌤️"],
+        "cloudy": ["облачно с прояснениями", "⛅"], "overcast": ["пасмурно", "☁️"],
+        "light-rain": ["небольшой дождь", "🌧️"], "rain": ["дождь", "🌧️"],
+        "heavy-rain": ["сильный дождь", "🌧️"], "showers": ["ливень", "🚿"],
+        "light-snow": ["небольшой снег", "🌨️"], "snow": ["снег", "❄️"],
+        "thunderstorm": ["гроза", "⛈️"]
     };
 
+    const getAccuIcon = (id) => {
+        if (id <= 4) return "☀️"; if (id <= 6) return "🌤️"; if (id <= 11) return "☁️";
+        if (id <= 18) return "🌧️"; if (id <= 29) return "❄️"; return "⛅";
+    };
+
+    // --- ЛОГИКА НАСТРОЕК ---
     function initSettings() {
         const savedTheme = localStorage.getItem('weather-theme') || 'light';
         const savedColor = localStorage.getItem('weather-accent') || '#4285f4';
@@ -257,13 +275,18 @@
 
     function setAccent(color, save = true) {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
-        document.documentElement.style.setProperty('--primary-container', color + (isDark ? '40' : '26'));
+        const alpha = isDark ? '40' : '26'; 
+        document.documentElement.style.setProperty('--primary-container', color + alpha);
         document.documentElement.style.setProperty('--primary-seed', color);
         if(save) localStorage.setItem('weather-accent', color);
     }
 
-    function saveAndFetch() { localStorage.setItem('weather-source', document.getElementById('source').value); fetchWeather(); }
+    function saveAndFetch() {
+        localStorage.setItem('weather-source', document.getElementById('source').value);
+        fetchWeather();
+    }
 
+    // --- ГЕОЛОКАЦИЯ ---
     window.onload = () => {
         initSettings();
         if (navigator.geolocation) {
@@ -271,16 +294,28 @@
                 userCoords.lat = position.coords.latitude;
                 userCoords.lon = position.coords.longitude;
                 document.getElementById('coords-display').innerText = `${userCoords.lat.toFixed(4)}°N, ${userCoords.lon.toFixed(4)}°E`;
+                
                 try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userCoords.lat}&lon=${userCoords.lon}`);
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userCoords.lat}&lon=${userCoords.lon}&addressdetails=1&accept-language=ru`);
                     const data = await res.json();
-                    document.getElementById('current-city').innerText = data.address.city || data.address.town || "Мой город";
-                } catch(e) { document.getElementById('current-city').innerText = "Местоположение"; }
+                    const addr = data.address;
+                    let preciseLocation = "";
+                    if (addr.road) preciseLocation += addr.road;
+                    const area = addr.suburb || addr.neighbourhood || addr.city_district || addr.village;
+                    if (area) preciseLocation += (preciseLocation ? ", " : "") + area;
+                    if (!preciseLocation) preciseLocation = addr.city || addr.town || "Мое место";
+                    document.getElementById('current-city').innerText = preciseLocation;
+                } catch(e) { 
+                    document.getElementById('current-city').innerText = "Местоположение"; 
+                }
                 fetchWeather();
-            });
+            }, () => {
+                document.getElementById('weather-desc').innerText = "Включите GPS";
+            }, { enableHighAccuracy: true });
         }
     };
 
+    // --- ПОЛУЧЕНИЕ ПОГОДЫ ---
     async function fetchWeather() {
         const source = document.getElementById('source').value;
         document.getElementById('forecast').innerHTML = '<div class="loading">Обновление...</div>';
@@ -303,16 +338,16 @@
     }
 
     async function fetchYandex() {
-        const res = await fetch(`https://api.weather.yandex.ru/v2/forecast?lat=${userCoords.lat}&lon=${userCoords.lon}`, { headers: { 'X-Yandex-API-Key': KEYS.yandex }});
+        const res = await fetch(`https://api.weather.yandex.ru/v2/forecast?lat=${userCoords.lat}&lon=${userCoords.lon}`, {
+            headers: { 'X-Yandex-API-Key': KEYS.yandex }
+        });
         const data = await res.json();
-        const mainCond = yandexMap[data.fact.condition] || [data.fact.condition, "⛅"];
-        updateUI(data.fact.temp, capitalize(mainCond[0]), data.forecasts.map(f => {
-            const dayCond = yandexMap[f.parts.day.condition] || ["облачно", "⛅"];
-            return {
-                day: new Date(f.date).toLocaleDateString('ru', {weekday: 'short', day: 'numeric'}),
-                max: f.parts.day.temp_max, min: f.parts.night.temp_min, icon: dayCond[1]
-            };
-        }));
+        const cond = yandexMap[data.fact.condition] || [data.fact.condition, "⛅"];
+        updateUI(data.fact.temp, capitalize(cond[0]), data.forecasts.map(f => ({
+            day: new Date(f.date).toLocaleDateString('ru', {weekday: 'short', day: 'numeric'}),
+            max: f.parts.day.temp_max, min: f.parts.night.temp_min,
+            icon: (yandexMap[f.parts.day.condition] || ["", "⛅"])[1]
+        })));
     }
 
     async function fetchAccuWeather() {
@@ -322,10 +357,6 @@
         const currentData = await currentRes.json();
         const forecastRes = await fetch(`https://dataservice.accuweather.com/forecasts/v1/daily/5day/${locData.Key}?apikey=${KEYS.accu}&metric=true&language=ru-ru`);
         const forecastData = await forecastRes.json();
-        const getAccuIcon = (id) => {
-            if (id <= 4) return "☀️"; if (id <= 6) return "🌤️"; if (id <= 11) return "☁️";
-            if (id <= 18) return "🌧️"; if (id <= 29) return "❄️"; return "⛅";
-        };
         updateUI(Math.round(currentData[0].Temperature.Metric.Value), capitalize(currentData[0].WeatherText), forecastData.DailyForecasts.map(f => ({
             day: new Date(f.Date).toLocaleDateString('ru', {weekday: 'short', day: 'numeric'}),
             max: Math.round(f.Temperature.Maximum.Value), min: Math.round(f.Temperature.Minimum.Value),
@@ -338,7 +369,10 @@
         document.getElementById('weather-desc').innerText = desc;
         document.getElementById('forecast').innerHTML = forecast.map(f => `
             <div class="forecast-item">
-                <div class="forecast-info"><span class="forecast-icon">${f.icon}</span><span class="forecast-date">${f.day}</span></div>
+                <div class="forecast-info">
+                    <span class="forecast-icon">${f.icon}</span>
+                    <span class="forecast-date">${f.day}</span>
+                </div>
                 <span><b>${f.max}°</b> / <span style="opacity:0.5">${f.min}°</span></span>
             </div>
         `).join('');
