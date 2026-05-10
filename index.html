@@ -18,7 +18,7 @@
             --on-primary-container: #00154e;
             --secondary-container: #e1e2ec;
             --surface-variant: #e1e2ec;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: all 0.25s cubic-bezier(0, 0, 0.2, 1);
         }
 
         [data-theme="dark"] {
@@ -70,68 +70,135 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            transition: var(--transition);
         }
 
-        .controls { display: flex; gap: 6px; flex-shrink: 0; }
+        .controls { display: flex; gap: 6px; flex-shrink: 0; position: relative; }
 
         button.icon-btn {
             border: none; width: 40px; height: 40px; border-radius: 50%;
             cursor: pointer; background: var(--secondary-container);
             font-size: 18px; display: flex; align-items: center;
-            justify-content: center; transition: var(--transition);
+            justify-content: center; 
+            transition: var(--transition);
             color: var(--on-surface);
         }
 
+        /* ИСПРАВЛЕННЫЙ БЛОК ПОИСКА */
         .search-wrapper {
-            position: relative; width: 100%;
-            display: none; flex-direction: column;
-            animation: slideDown 0.3s ease;
+            position: relative;
+            width: 100%;
+            display: none;
+            flex-direction: column;
+            animation: slideDown 0.2s cubic-bezier(0, 0, 0.2, 1);
         }
         .search-wrapper.active { display: flex; }
 
-        .search-container { display: flex; gap: 8px; width: 100%; }
+        .search-container {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .search-input {
-            flex: 1; border: none; background: var(--secondary-container);
-            color: var(--on-surface); padding: 12px 20px;
-            border-radius: 24px; outline: none; font-family: inherit;
+            flex: 1; /* Инпут забирает всё место */
+            border: none;
+            background: var(--secondary-container);
+            color: var(--on-surface);
+            padding: 12px 20px;
+            border-radius: 24px;
+            outline: none;
+            font-family: inherit;
+            transition: var(--transition);
+            min-width: 0; /* Важно для flex-распорки */
         }
 
         .suggestions-list {
-            position: absolute; top: 52px; left: 0; right: 0;
-            background: var(--surface-variant); border-radius: 20px;
+            position: absolute;
+            top: 52px;
+            left: 0;
+            right: 0;
+            background: var(--surface-variant);
+            border-radius: 20px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            z-index: 200; max-height: 320px; overflow-y: auto;
+            z-index: 150;
+            max-height: 320px;
+            overflow-y: auto;
             display: none;
         }
         .suggestions-list.active { display: block; }
 
         .suggestion-item {
-            padding: 14px 20px; cursor: pointer; font-size: 14px;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-size: 14px;
             border-bottom: 1px solid rgba(128,128,128,0.1);
+            transition: background 0.15s ease;
         }
         .suggestion-item:hover { background: rgba(128,128,128,0.15); }
         .suggestion-item small { display: block; opacity: 0.6; margin-top: 2px; }
 
+        /* ПАЛИТРА */
+        .palette-menu {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: var(--surface-variant);
+            padding: 16px;
+            border-radius: 28px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            z-index: 300;
+            transform: scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+            transform-origin: top right;
+        }
+        .palette-menu.active { transform: scale(1); opacity: 1; pointer-events: all; }
+
+        .color-dot { 
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; 
+            transition: transform 0.15s ease;
+        }
+        .color-dot:hover { transform: scale(1.1); }
+
+        .custom-color-wrapper { width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(from 0deg, red, #ff0, lime, aqua, blue, #f0f, red); position: relative; overflow: hidden; }
+        #custom-color-btn { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; opacity: 0; }
+
+        /* КАРТОЧКА */
         .weather-card {
-            background: var(--primary-container); color: var(--on-primary-container);
-            padding: 40px 32px; border-radius: 32px; text-align: center;
+            background: var(--primary-container);
+            color: var(--on-primary-container);
+            padding: 40px 32px;
+            border-radius: 32px;
+            text-align: center;
             margin-bottom: 24px;
+            transition: var(--transition);
         }
 
-        .temp { font-size: 88px; font-weight: 700; margin: 5px 0; letter-spacing: -4px; }
+        .temp { font-size: 88px; font-weight: 700; margin: 5px 0; letter-spacing: -4px; transition: var(--transition); }
         
         .source-select {
             background: rgba(128,128,128,0.15); border: 1px solid rgba(0,0,0,0.05);
             padding: 10px 20px; border-radius: 16px; color: inherit;
             font-family: inherit; margin-bottom: 20px; cursor: pointer;
-            outline: none;
+            outline: none; transition: var(--transition);
         }
 
         .forecast-item {
             background: var(--secondary-container); padding: 18px 24px;
             border-radius: 24px; display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 10px;
+            transition: var(--transition);
         }
 
         .forecast-info { display: flex; align-items: center; gap: 15px; }
@@ -141,7 +208,7 @@
         .loading { opacity: 0.5; animation: pulse 1.5s infinite; text-align: center; padding: 40px; }
         @keyframes pulse { 50% { opacity: 0.2; } }
         
-        h3 { margin-left: 12px; font-weight: 500; }
+        h3 { margin-left: 12px; font-weight: 500; transition: var(--transition); }
     </style>
 </head>
 <body data-theme="light">
@@ -155,6 +222,21 @@
                 <button class="icon-btn" onclick="getLocation()">🎯</button>
                 <button class="icon-btn" onclick="togglePalette(event)">🎨</button>
                 <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
+                
+                <div class="palette-menu" id="palette">
+                    <div class="color-dot" style="background: #FF0000" onclick="setAccent('#FF0000')"></div>
+                    <div class="color-dot" style="background: #D4FF00" onclick="setAccent('#D4FF00')"></div>
+                    <div class="color-dot" style="background: #FF7B00" onclick="setAccent('#FF7B00')"></div>
+                    <div class="color-dot" style="background: #FFDD00" onclick="setAccent('#FFDD00')"></div>
+                    <div class="color-dot" style="background: #11FF00" onclick="setAccent('#11FF00')"></div>
+                    <div class="color-dot" style="background: #00FFEE" onclick="setAccent('#00FFEE')"></div>
+                    <div class="color-dot" style="background: #001EFF" onclick="setAccent('#001EFF')"></div>
+                    <div class="color-dot" style="background: #AE00FF" onclick="setAccent('#AE00FF')"></div>
+                    <div class="color-dot" style="background: #FF004C" onclick="setAccent('#FF004C')"></div>
+                    <div class="color-dot" style="background: #000000" onclick="setAccent('#000000')"></div>
+                    <div class="color-dot" style="background: #FFFFFF" onclick="setAccent('#FFFFFF')"></div>
+                    <div class="custom-color-wrapper"><input type="color" id="custom-color-btn" oninput="setAccent(this.value)"></div>
+                </div>
             </div>
         </div>
         
@@ -192,24 +274,24 @@
     let searchTimer;
     const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
 
-    // --- ФОРМАТ АДРЕСА ---
     function formatAddress(addr) {
         if (!addr) return "Местоположение";
         let parts = [];
-        // Приоритет тегов для кварталов/микрорайонов
         const zone = addr.quarter || addr.suburb || addr.neighbourhood || addr.city_district || addr.place;
         const street = addr.road || addr.pedestrian;
-
         if (street) parts.push(street);
         if (zone && zone !== street) parts.push(zone);
-        
         if (parts.length === 0) {
             const city = addr.city || addr.town || addr.village;
             if (city) parts.push(city);
         }
-
         if (addr.country) parts.push(addr.country);
         return parts.join(', ');
+    }
+
+    function togglePalette(e) {
+        e.stopPropagation();
+        document.getElementById('palette').classList.toggle('active');
     }
 
     function toggleSearch() {
@@ -218,7 +300,6 @@
         if(wrapper.classList.contains('active')) document.getElementById('search-input').focus();
     }
 
-    // --- УМНЫЙ ПОИСК С ПРИНУДИТЕЛЬНОЙ ФИЛЬТРАЦИЕЙ ЧИСЕЛ ---
     function onSearchInput(val) {
         clearTimeout(searchTimer);
         const list = document.getElementById('suggestions');
@@ -227,36 +308,28 @@
         
         searchTimer = setTimeout(async () => {
             try {
-                // Извлекаем число (например, "33")
                 const numberMatch = inputVal.match(/\d+/);
                 const searchNum = numberMatch ? numberMatch[0] : null;
-
-                // Запрашиваем 50 результатов, чтобы точно найти иголку в стоге сена
                 let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputVal)}&limit=50&addressdetails=1&accept-language=ru`;
                 
-                // Приоритет текущему региону
                 if (userCoords.lat !== 0) {
                     const offset = 0.5;
                     const viewbox = `${userCoords.lon-offset},${userCoords.lat+offset},${userCoords.lon+offset},${userCoords.lat-offset}`;
                     url += `&viewbox=${viewbox}`;
                 }
 
-                const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.7' } });
+                const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.8' } });
                 const data = await res.json();
                 
                 if(data && data.length > 0) {
                     const uniqueResults = new Map();
-                    
-                    // Жесткая фильтрация по числу
                     const filtered = data.filter(item => {
                         if (!searchNum) return true;
                         const name = item.display_name.toLowerCase();
-                        // Проверяем, что число "33" есть в строке именно как число, а не часть "133" или "330"
                         const regex = new RegExp(`(^|\\D)${searchNum}(\\D|$)`);
                         return regex.test(name);
                     });
 
-                    // Сортировка: вперед те, у кого в адресе есть слова "микрорайон", "квартал"
                     const sorted = filtered.sort((a, b) => {
                         const keywords = ["микрорайон", "квартал", "мкр", "кв"];
                         const aMatch = keywords.some(k => a.display_name.toLowerCase().includes(k));
@@ -303,7 +376,7 @@
         if(!query) return;
         try {
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1&accept-language=ru`;
-            const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.7' } });
+            const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.8' } });
             const data = await res.json();
             if(data.length > 0) {
                 selectSuggestion(parseFloat(data[0].lat), parseFloat(data[0].lon), formatAddress(data[0].address));
@@ -319,7 +392,7 @@
                 userCoords.lon = position.coords.longitude;
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userCoords.lat}&lon=${userCoords.lon}&addressdetails=1&accept-language=ru`, {
-                        headers: { 'User-Agent': 'MaterialWeather/1.7' }
+                        headers: { 'User-Agent': 'MaterialWeather/1.8' }
                     });
                     const data = await res.json();
                     document.getElementById('current-city').innerText = formatAddress(data.address);
@@ -329,10 +402,6 @@
             }, () => alert("Разрешите доступ к GPS"), { enableHighAccuracy: true });
         }
     }
-
-    // --- ПОГОДНАЯ ЛОГИКА ---
-    const wmoCodes = { 0: { text: "Ясно", icon: "☀️" }, 1: { text: "Преимущественно ясно", icon: "🌤️" }, 2: { text: "Переменная облачность", icon: "⛅" }, 3: { text: "Пасмурно", icon: "☁️" }, 45: { text: "Туман", icon: "🌫️" }, 61: { text: "Дождь", icon: "🌧️" }, 95: { text: "Гроза", icon: "⛈️" } };
-    const yandexMap = { "clear": ["ясно", "☀️"], "partly-cloudy": ["малооблачно", "🌤️"], "cloudy": ["облачно с прояснениями", "⛅"], "overcast": ["пасмурно", "☁️"], "light-rain": ["небольшой дождь", "🌧️"], "rain": ["дождь", "🌧️"], "thunderstorm": ["гроза", "⛈️"] };
 
     function initSettings() {
         const savedTheme = localStorage.getItem('weather-theme') || 'light';
@@ -344,7 +413,13 @@
         setAccent(savedColor, false);
     }
 
-    function togglePalette(e) { e.stopPropagation(); }
+    window.onclick = (e) => {
+        document.getElementById('palette').classList.remove('active');
+        if(document.getElementById('search-wrapper') && !document.getElementById('search-wrapper').contains(e.target)) {
+            document.getElementById('suggestions').classList.remove('active');
+        }
+    };
+
     function toggleTheme() {
         const current = document.body.getAttribute('data-theme');
         const next = current === 'light' ? 'dark' : 'light';
@@ -364,6 +439,9 @@
     function saveAndFetch() { localStorage.setItem('weather-source', document.getElementById('source').value); fetchWeather(); }
 
     window.onload = () => { initSettings(); getLocation(); };
+
+    const wmoCodes = { 0: { text: "Ясно", icon: "☀️" }, 1: { text: "Преимущественно ясно", icon: "🌤️" }, 2: { text: "Переменная облачность", icon: "⛅" }, 3: { text: "Пасмурно", icon: "☁️" }, 45: { text: "Туман", icon: "🌫️" }, 61: { text: "Дождь", icon: "🌧️" }, 95: { text: "Гроза", icon: "⛈️" } };
+    const yandexMap = { "clear": ["ясно", "☀️"], "partly-cloudy": ["малооблачно", "🌤️"], "cloudy": ["облачно с прояснениями", "⛅"], "overcast": ["пасмурно", "☁️"], "light-rain": ["небольшой дождь", "🌧️"], "rain": ["дождь", "🌧️"], "thunderstorm": ["гроза", "⛈️"] };
 
     async function fetchWeather() {
         const source = document.getElementById('source').value;
