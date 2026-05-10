@@ -73,120 +73,102 @@
             transition: var(--transition);
         }
 
-        .controls { display: flex; gap: 6px; flex-shrink: 0; position: relative; }
+        .menu-container { position: relative; flex-shrink: 0; }
 
         button.icon-btn {
             border: none; width: 40px; height: 40px; border-radius: 50%;
             cursor: pointer; background: var(--secondary-container);
             font-size: 18px; display: flex; align-items: center;
-            justify-content: center; 
-            transition: var(--transition);
+            justify-content: center; transition: var(--transition);
             color: var(--on-surface);
         }
 
-        /* ИСПРАВЛЕННЫЙ БЛОК ПОИСКА */
-        .search-wrapper {
-            position: relative;
-            width: 100%;
+        /* ОБЩИЕ СТИЛИ МЕНЮ */
+        .dropdown-menu {
+            position: absolute; top: 50px; right: 0;
+            background: var(--surface-variant);
+            border-radius: 24px;
+            padding: 8px;
+            min-width: 220px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+            z-index: 500;
             display: none;
             flex-direction: column;
+            transform-origin: top right;
             animation: slideDown 0.2s cubic-bezier(0, 0, 0.2, 1);
         }
-        .search-wrapper.active { display: flex; }
+        .dropdown-menu.active { display: flex; }
 
-        .search-container {
+        .menu-item {
             display: flex;
-            width: 100%;
-            gap: 8px;
             align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 18px;
+            transition: background 0.2s ease;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        .menu-item:hover { background: rgba(128,128,128,0.2); }
+        .menu-item .icon { font-size: 20px; width: 24px; text-align: center; }
+
+        /* СПЕЦИФИКА ПАЛИТРЫ */
+        .palette-header {
+            border-bottom: 1px solid rgba(128,128,128,0.1);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
         }
 
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .colors-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 8px;
         }
 
+        .color-dot { 
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; 
+            transition: transform 0.15s ease;
+        }
+        .color-dot:hover { transform: scale(1.1); }
+        .custom-color-wrapper { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(from 0deg, red, #ff0, lime, aqua, blue, #f0f, red); position: relative; overflow: hidden; }
+        #custom-color-btn { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; opacity: 0; }
+
+        /* ПОИСК */
+        .search-wrapper {
+            position: relative; width: 100%; display: none; flex-direction: column;
+            animation: slideDown 0.2s ease;
+        }
+        .search-wrapper.active { display: flex; }
+        .search-container { display: flex; width: 100%; gap: 8px; align-items: center; }
         .search-input {
-            flex: 1; /* Инпут забирает всё место */
-            border: none;
-            background: var(--secondary-container);
-            color: var(--on-surface);
-            padding: 12px 20px;
-            border-radius: 24px;
-            outline: none;
-            font-family: inherit;
+            flex: 1; border: none; background: var(--secondary-container);
+            color: var(--on-surface); padding: 12px 20px;
+            border-radius: 24px; outline: none; font-family: inherit;
             transition: var(--transition);
-            min-width: 0; /* Важно для flex-распорки */
         }
 
         .suggestions-list {
-            position: absolute;
-            top: 52px;
-            left: 0;
-            right: 0;
-            background: var(--surface-variant);
-            border-radius: 20px;
+            position: absolute; top: 52px; left: 0; right: 0;
+            background: var(--surface-variant); border-radius: 20px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            z-index: 150;
-            max-height: 320px;
-            overflow-y: auto;
-            display: none;
+            z-index: 150; max-height: 300px; overflow-y: auto; display: none;
         }
         .suggestions-list.active { display: block; }
 
         .suggestion-item {
-            padding: 14px 20px;
-            cursor: pointer;
-            font-size: 14px;
+            padding: 14px 20px; cursor: pointer; font-size: 14px;
             border-bottom: 1px solid rgba(128,128,128,0.1);
-            transition: background 0.15s ease;
         }
-        .suggestion-item:hover { background: rgba(128,128,128,0.15); }
-        .suggestion-item small { display: block; opacity: 0.6; margin-top: 2px; }
-
-        /* ПАЛИТРА */
-        .palette-menu {
-            position: absolute;
-            top: 55px;
-            right: 0;
-            background: var(--surface-variant);
-            padding: 16px;
-            border-radius: 28px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-            z-index: 300;
-            transform: scale(0.9);
-            opacity: 0;
-            pointer-events: none;
-            transition: var(--transition);
-            transform-origin: top right;
-        }
-        .palette-menu.active { transform: scale(1); opacity: 1; pointer-events: all; }
-
-        .color-dot { 
-            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; 
-            transition: transform 0.15s ease;
-        }
-        .color-dot:hover { transform: scale(1.1); }
-
-        .custom-color-wrapper { width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(from 0deg, red, #ff0, lime, aqua, blue, #f0f, red); position: relative; overflow: hidden; }
-        #custom-color-btn { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; opacity: 0; }
 
         /* КАРТОЧКА */
         .weather-card {
-            background: var(--primary-container);
-            color: var(--on-primary-container);
-            padding: 40px 32px;
-            border-radius: 32px;
-            text-align: center;
-            margin-bottom: 24px;
-            transition: var(--transition);
+            background: var(--primary-container); color: var(--on-primary-container);
+            padding: 40px 32px; border-radius: 32px; text-align: center;
+            margin-bottom: 24px; transition: var(--transition);
         }
-
         .temp { font-size: 88px; font-weight: 700; margin: 5px 0; letter-spacing: -4px; transition: var(--transition); }
-        
         .source-select {
             background: rgba(128,128,128,0.15); border: 1px solid rgba(0,0,0,0.05);
             padding: 10px 20px; border-radius: 16px; color: inherit;
@@ -197,16 +179,16 @@
         .forecast-item {
             background: var(--secondary-container); padding: 18px 24px;
             border-radius: 24px; display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 10px;
-            transition: var(--transition);
+            align-items: center; margin-bottom: 10px; transition: var(--transition);
         }
-
         .forecast-info { display: flex; align-items: center; gap: 15px; }
         .forecast-icon { font-size: 24px; }
         .forecast-date { font-weight: 500; min-width: 60px; }
 
-        .loading { opacity: 0.5; animation: pulse 1.5s infinite; text-align: center; padding: 40px; }
-        @keyframes pulse { 50% { opacity: 0.2; } }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         
         h3 { margin-left: 12px; font-weight: 500; transition: var(--transition); }
     </style>
@@ -217,25 +199,46 @@
     <div class="header">
         <div class="top-bar">
             <h2 id="current-city">Определение...</h2>
-            <div class="controls">
-                <button class="icon-btn" onclick="toggleSearch()">📍</button>
-                <button class="icon-btn" onclick="getLocation()">🎯</button>
-                <button class="icon-btn" onclick="togglePalette(event)">🎨</button>
-                <button class="icon-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
+            <div class="menu-container">
+                <button class="icon-btn" onclick="toggleMenu(event)" title="Меню">☰</button>
                 
-                <div class="palette-menu" id="palette">
-                    <div class="color-dot" style="background: #FF0000" onclick="setAccent('#FF0000')"></div>
-                    <div class="color-dot" style="background: #D4FF00" onclick="setAccent('#D4FF00')"></div>
-                    <div class="color-dot" style="background: #FF7B00" onclick="setAccent('#FF7B00')"></div>
-                    <div class="color-dot" style="background: #FFDD00" onclick="setAccent('#FFDD00')"></div>
-                    <div class="color-dot" style="background: #11FF00" onclick="setAccent('#11FF00')"></div>
-                    <div class="color-dot" style="background: #00FFEE" onclick="setAccent('#00FFEE')"></div>
-                    <div class="color-dot" style="background: #001EFF" onclick="setAccent('#001EFF')"></div>
-                    <div class="color-dot" style="background: #AE00FF" onclick="setAccent('#AE00FF')"></div>
-                    <div class="color-dot" style="background: #FF004C" onclick="setAccent('#FF004C')"></div>
-                    <div class="color-dot" style="background: #000000" onclick="setAccent('#000000')"></div>
-                    <div class="color-dot" style="background: #FFFFFF" onclick="setAccent('#FFFFFF')"></div>
-                    <div class="custom-color-wrapper"><input type="color" id="custom-color-btn" oninput="setAccent(this.value)"></div>
+                <div class="dropdown-menu" id="main-menu">
+                    <div class="menu-item" onclick="handleMenuAction('location')">
+                        <span class="icon">🎯</span> Мое местоположение
+                    </div>
+                    <div class="menu-item" onclick="handleMenuAction('search')">
+                        <span class="icon">📍</span> Ввести адрес
+                    </div>
+                    <div class="menu-item" onclick="handleMenuAction('palette')">
+                        <span class="icon">🎨</span> Цвет
+                    </div>
+                    <div class="menu-item" onclick="handleMenuAction('theme')">
+                        <span class="icon" id="menu-theme-icon">☀️</span> Тема
+                    </div>
+                </div>
+
+                <div class="dropdown-menu" id="palette">
+                    <div class="palette-header">
+                        <div class="menu-item" onclick="backToMenu()">
+                            <span class="icon">←</span> Назад
+                        </div>
+                    </div>
+                    <div class="colors-grid">
+                        <div class="color-dot" style="background: #FF0000" onclick="setAccent('#FF0000')"></div>
+                        <div class="color-dot" style="background: #D4FF00" onclick="setAccent('#D4FF00')"></div>
+                        <div class="color-dot" style="background: #FF7B00" onclick="setAccent('#FF7B00')"></div>
+                        <div class="color-dot" style="background: #FFDD00" onclick="setAccent('#FFDD00')"></div>
+                        <div class="color-dot" style="background: #11FF00" onclick="setAccent('#11FF00')"></div>
+                        <div class="color-dot" style="background: #00FFEE" onclick="setAccent('#00FFEE')"></div>
+                        <div class="color-dot" style="background: #001EFF" onclick="setAccent('#001EFF')"></div>
+                        <div class="color-dot" style="background: #AE00FF" onclick="setAccent('#AE00FF')"></div>
+                        <div class="color-dot" style="background: #FF004C" onclick="setAccent('#FF004C')"></div>
+                        <div class="color-dot" style="background: #000000" onclick="setAccent('#000000')"></div>
+                        <div class="color-dot" style="background: #FFFFFF" onclick="setAccent('#FFFFFF')"></div>
+                        <div class="custom-color-wrapper">
+                            <input type="color" id="custom-color-btn" oninput="setAccent(this.value)">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -274,6 +277,54 @@
     let searchTimer;
     const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1);
 
+    // --- УПРАВЛЕНИЕ МЕНЮ ---
+    function toggleMenu(e) {
+        e.stopPropagation();
+        const mainMenu = document.getElementById('main-menu');
+        const palette = document.getElementById('palette');
+        
+        // Если открыта палитра, при клике на ☰ просто закрываем всё
+        if (palette.classList.contains('active')) {
+            palette.classList.remove('active');
+        } else {
+            mainMenu.classList.toggle('active');
+        }
+    }
+
+    function backToMenu() {
+        document.getElementById('palette').classList.remove('active');
+        document.getElementById('main-menu').classList.add('active');
+    }
+
+    function handleMenuAction(action) {
+        if (action === 'location') {
+            getLocation();
+            document.getElementById('main-menu').classList.remove('active');
+        } else if (action === 'search') {
+            const wrapper = document.getElementById('search-wrapper');
+            wrapper.classList.toggle('active');
+            if(wrapper.classList.contains('active')) document.getElementById('search-input').focus();
+            document.getElementById('main-menu').classList.remove('active');
+        } else if (action === 'palette') {
+            document.getElementById('main-menu').classList.remove('active');
+            document.getElementById('palette').classList.add('active');
+        } else if (action === 'theme') {
+            toggleTheme();
+            // Меню НЕ закрываем, как просил пользователь
+        }
+    }
+
+    window.onclick = (e) => {
+        if (!e.target.closest('.menu-container')) {
+            document.getElementById('main-menu').classList.remove('active');
+            document.getElementById('palette').classList.remove('active');
+        }
+        if (document.getElementById('search-wrapper') && !document.getElementById('search-wrapper').contains(e.target)) {
+            document.getElementById('suggestions').classList.remove('active');
+        }
+    };
+
+    // --- ГЕОЛОКАЦИЯ И ПОИСК ---
     function formatAddress(addr) {
         if (!addr) return "Местоположение";
         let parts = [];
@@ -289,17 +340,6 @@
         return parts.join(', ');
     }
 
-    function togglePalette(e) {
-        e.stopPropagation();
-        document.getElementById('palette').classList.toggle('active');
-    }
-
-    function toggleSearch() {
-        const wrapper = document.getElementById('search-wrapper');
-        wrapper.classList.toggle('active');
-        if(wrapper.classList.contains('active')) document.getElementById('search-input').focus();
-    }
-
     function onSearchInput(val) {
         clearTimeout(searchTimer);
         const list = document.getElementById('suggestions');
@@ -311,16 +351,13 @@
                 const numberMatch = inputVal.match(/\d+/);
                 const searchNum = numberMatch ? numberMatch[0] : null;
                 let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputVal)}&limit=50&addressdetails=1&accept-language=ru`;
-                
                 if (userCoords.lat !== 0) {
                     const offset = 0.5;
                     const viewbox = `${userCoords.lon-offset},${userCoords.lat+offset},${userCoords.lon+offset},${userCoords.lat-offset}`;
                     url += `&viewbox=${viewbox}`;
                 }
-
-                const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.8' } });
+                const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.9' } });
                 const data = await res.json();
-                
                 if(data && data.length > 0) {
                     const uniqueResults = new Map();
                     const filtered = data.filter(item => {
@@ -329,33 +366,27 @@
                         const regex = new RegExp(`(^|\\D)${searchNum}(\\D|$)`);
                         return regex.test(name);
                     });
-
-                    const sorted = filtered.sort((a, b) => {
+                    sorted = filtered.sort((a, b) => {
                         const keywords = ["микрорайон", "квартал", "мкр", "кв"];
                         const aMatch = keywords.some(k => a.display_name.toLowerCase().includes(k));
                         const bMatch = keywords.some(k => b.display_name.toLowerCase().includes(k));
                         return bMatch - aMatch;
                     });
-
                     sorted.forEach(item => {
                         const cleanName = formatAddress(item.address);
-                        if (!uniqueResults.has(cleanName)) {
-                            uniqueResults.set(cleanName, item);
-                        }
+                        if (!uniqueResults.has(cleanName)) uniqueResults.set(cleanName, item);
                     });
-
                     const finalResults = Array.from(uniqueResults.values()).slice(0, 8);
-
                     if (finalResults.length > 0) {
                         list.innerHTML = finalResults.map(item => `
                             <div class="suggestion-item" onclick="selectSuggestion(${item.lat}, ${item.lon}, '${formatAddress(item.address).replace(/'/g, "\\'")}')">
                                 ${formatAddress(item.address)}
-                                <small>${item.address.city || item.address.state || 'Регион'}</small>
+                                <small style="display:block; opacity:0.6; margin-top:2px;">${item.address.city || item.address.state || ''}</small>
                             </div>
                         `).join('');
                         list.classList.add('active');
-                    } else { list.classList.remove('active'); }
-                } else { list.classList.remove('active'); }
+                    } else list.classList.remove('active');
+                } else list.classList.remove('active');
             } catch(e) { console.error(e); }
         }, 400);
     }
@@ -376,11 +407,9 @@
         if(!query) return;
         try {
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1&accept-language=ru`;
-            const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.8' } });
+            const res = await fetch(url, { headers: { 'User-Agent': 'MaterialWeather/1.9' } });
             const data = await res.json();
-            if(data.length > 0) {
-                selectSuggestion(parseFloat(data[0].lat), parseFloat(data[0].lon), formatAddress(data[0].address));
-            } else { alert("Ничего не найдено"); }
+            if(data.length > 0) selectSuggestion(parseFloat(data[0].lat), parseFloat(data[0].lon), formatAddress(data[0].address));
         } catch(e) { alert("Ошибка поиска"); }
     }
 
@@ -392,7 +421,7 @@
                 userCoords.lon = position.coords.longitude;
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userCoords.lat}&lon=${userCoords.lon}&addressdetails=1&accept-language=ru`, {
-                        headers: { 'User-Agent': 'MaterialWeather/1.8' }
+                        headers: { 'User-Agent': 'MaterialWeather/1.9' }
                     });
                     const data = await res.json();
                     document.getElementById('current-city').innerText = formatAddress(data.address);
@@ -403,30 +432,29 @@
         }
     }
 
+    // --- НАСТРОЙКИ ---
     function initSettings() {
         const savedTheme = localStorage.getItem('weather-theme') || 'light';
         const savedColor = localStorage.getItem('weather-accent') || '#4285f4';
         const savedSource = localStorage.getItem('weather-source') || 'openmeteo';
         document.body.setAttribute('data-theme', savedTheme);
-        document.getElementById('theme-btn').innerText = savedTheme === 'light' ? '☀️' : '🌙';
+        updateThemeIcon(savedTheme);
         document.getElementById('source').value = savedSource;
         setAccent(savedColor, false);
     }
-
-    window.onclick = (e) => {
-        document.getElementById('palette').classList.remove('active');
-        if(document.getElementById('search-wrapper') && !document.getElementById('search-wrapper').contains(e.target)) {
-            document.getElementById('suggestions').classList.remove('active');
-        }
-    };
 
     function toggleTheme() {
         const current = document.body.getAttribute('data-theme');
         const next = current === 'light' ? 'dark' : 'light';
         document.body.setAttribute('data-theme', next);
-        document.getElementById('theme-btn').innerText = next === 'light' ? '☀️' : '🌙';
+        updateThemeIcon(next);
         localStorage.setItem('weather-theme', next);
         setAccent(localStorage.getItem('weather-accent') || '#4285f4', false);
+    }
+
+    function updateThemeIcon(theme) {
+        const icon = theme === 'light' ? '☀️' : '🌙';
+        document.getElementById('menu-theme-icon').innerText = icon;
     }
 
     function setAccent(color, save = true) {
@@ -440,6 +468,7 @@
 
     window.onload = () => { initSettings(); getLocation(); };
 
+    // --- ПОГОДА ---
     const wmoCodes = { 0: { text: "Ясно", icon: "☀️" }, 1: { text: "Преимущественно ясно", icon: "🌤️" }, 2: { text: "Переменная облачность", icon: "⛅" }, 3: { text: "Пасмурно", icon: "☁️" }, 45: { text: "Туман", icon: "🌫️" }, 61: { text: "Дождь", icon: "🌧️" }, 95: { text: "Гроза", icon: "⛈️" } };
     const yandexMap = { "clear": ["ясно", "☀️"], "partly-cloudy": ["малооблачно", "🌤️"], "cloudy": ["облачно с прояснениями", "⛅"], "overcast": ["пасмурно", "☁️"], "light-rain": ["небольшой дождь", "🌧️"], "rain": ["дождь", "🌧️"], "thunderstorm": ["гроза", "⛈️"] };
 
