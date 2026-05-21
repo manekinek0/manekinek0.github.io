@@ -77,7 +77,12 @@
         .menu-item:hover { background: rgba(128,128,128,0.2); }
         .menu-item .icon { font-size: 20px; width: 24px; text-align: center; }
 
-        /* ИСТОЧНИК */
+        .palette-header { border-bottom: 1px solid rgba(128,128,128,0.1); margin-bottom: 8px; padding-bottom: 4px; }
+        .colors-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 8px; }
+        .color-dot { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s ease; }
+        .color-dot:hover { transform: scale(1.1); }
+        
+        /* ИСТОЧНИК ПОГОДЫ */
         .source-picker-container { position: relative; display: inline-block; margin-bottom: 20px; }
         .source-picker-btn {
             background: var(--primary-container); border: 1px solid rgba(0,0,0,0.05);
@@ -86,17 +91,8 @@
             transition: var(--transition); display: flex; align-items: center; gap: 8px;
         }
         .source-picker-btn:after { content: '▼'; font-size: 9px; opacity: 0.7; }
-        
         .source-menu { left: 50%; right: auto; transform: translate(-50%, -10px) scale(0.95); min-width: 180px; transform-origin: top center; }
         .source-menu.active { transform: translate(-50%, 0) scale(1); }
-
-        /* ПАЛИТРА */
-        .palette-header { border-bottom: 1px solid rgba(128,128,128,0.1); margin-bottom: 8px; padding-bottom: 4px; }
-        .colors-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 8px; }
-        .color-dot { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s ease; }
-        .color-dot:hover { transform: scale(1.1); }
-        .custom-color-wrapper { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(from 0deg, red, #ff0, lime, aqua, blue, #f0f, red); position: relative; overflow: hidden; }
-        #custom-color-btn { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; opacity: 0; }
 
         /* ПОИСК */
         .search-wrapper { position: relative; width: 100%; display: none; flex-direction: column; animation: slideDown 0.2s ease; }
@@ -116,6 +112,7 @@
         .suggestions-list.active { display: block; }
         .suggestion-item { padding: 14px 20px; cursor: pointer; font-size: 14px; border-bottom: 1px solid rgba(128,128,128,0.1); color: var(--on-surface); }
 
+        /* КАРТОЧКА ПОГОДЫ */
         .weather-card {
             background: var(--primary-container); color: var(--on-primary-container);
             padding: 40px 32px; border-radius: 32px; text-align: center;
@@ -123,6 +120,7 @@
         }
         .temp { font-size: 88px; font-weight: 700; margin: 5px 0; letter-spacing: -4px; transition: var(--transition); }
 
+        /* ЛОАДЕР */
         .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; width: 100%; gap: 16px; }
         .loader {
             width: 48px; height: 48px; border: 4px solid var(--secondary-container);
@@ -187,7 +185,7 @@
             <button class="source-picker-btn" id="source-display" onclick="toggleSourceMenu(event)">Open-Meteo</button>
             <div class="dropdown-menu source-menu" id="source-menu">
                 <div class="menu-item" onclick="selectSource('openmeteo', 'Open-Meteo')">Open-Meteo</div>
-                <div class="menu-item" onclick="selectSource('yandex', 'Яндекс Погода')">Яндекс Погода</div>
+                <div class="menu-item" onclick="selectSource('weatherapi', 'WeatherAPI')">WeatherAPI</div>
                 <div class="menu-item" onclick="selectSource('accuweather', 'AccuWeather')">AccuWeather</div>
             </div>
         </div>
@@ -201,50 +199,50 @@
 </div>
 
 <script>
+    // --- НАСТРОЙКА КЛЮЧЕЙ СЕРВИСОВ ---
+    const KEYS = { 
+        weatherapi: 'f8cbea75cd8b4fca894173218262105', 
+        accu: 'zpka_037982925b6d47d082834529273794bf_302056d7' 
+    };
+
+    let userCoords = { lat: 0, lon: 0 };
+    let searchTimer;
+    let currentLang = 'ru';
+    let currentSource = 'openmeteo';
+
     const i18n = {
         ru: {
             menu_location: "Мое местоположение", menu_search: "Ввести адрес", menu_color: "Цвет", menu_lang: "Язык", menu_theme: "Тема",
             back: "Назад", search_placeholder: "Город, район или улица...", forecast_title: "Прогноз на 10 дней", updating: "Обновление...",
             error_gps: "Разрешите доступ к GPS", error_api: "Ошибка API", error_search: "Ничего не найдено",
-            wmo: { 0: "Ясно", 1: "Преимущественно ясно", 2: "Переменная облачность", 3: "Пасмурно", 45: "Туман", 61: "Дождь", 95: "Гроза" },
-            yMap: { "clear": "ясно", "partly-cloudy": "малооблачно", "cloudy": "облачно", "overcast": "пасмурно", "light-rain": "небольшой дождь", "rain": "дождь", "thunderstorm": "гроза" }
+            wmo: { 0: "Ясно", 1: "Преимущественно ясно", 2: "Переменная облачность", 3: "Пасмурно", 45: "Туман", 61: "Дождь", 95: "Гроза" }
         },
         en: {
             menu_location: "My Location", menu_search: "Enter Address", menu_color: "Color", menu_lang: "Language", menu_theme: "Theme",
             back: "Back", search_placeholder: "City, district or street...", forecast_title: "10-Day Forecast", updating: "Updating...",
             error_gps: "Enable GPS access", error_api: "API Error", error_search: "Nothing found",
-            wmo: { 0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast", 45: "Foggy", 61: "Rain", 95: "Thunderstorm" },
-            yMap: { "clear": "clear", "partly-cloudy": "partly cloudy", "cloudy": "cloudy", "overcast": "overcast", "light-rain": "light rain", "rain": "rain", "thunderstorm": "thunderstorm" }
+            wmo: { 0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast", 45: "Foggy", 61: "Rain", 95: "Thunderstorm" }
         },
         fr: {
             menu_location: "Ma position", menu_search: "Saisir l'adresse", menu_color: "Couleur", menu_lang: "Langue", menu_theme: "Thème",
             back: "Retour", search_placeholder: "Ville, quartier ou rue...", forecast_title: "Prévisions sur 10 jours", updating: "Mise à jour...",
             error_gps: "Activez le GPS", error_api: "Erreur API", error_search: "Rien trouvé",
-            wmo: { 0: "Ciel dégagé", 1: "Plutôt dégagé", 2: "Partiellement nuageux", 3: "Couvert", 45: "Brouillard", 61: "Pluie", 95: "Orage" },
-            yMap: { "clear": "clair", "partly-cloudy": "partiellement nuageux", "cloudy": "nuageux", "overcast": "couvert", "light-rain": "pluie légère", "rain": "pluie", "thunderstorm": "orage" }
+            wmo: { 0: "Ciel dégagé", 1: "Plutôt dégagé", 2: "Partiellement nuageux", 3: "Couvert", 45: "Brouillard", 61: "Pluie", 95: "Orage" }
         },
         de: {
             menu_location: "Mein Standort", menu_search: "Adresse eingeben", menu_color: "Farbe", menu_lang: "Sprache", menu_theme: "Thema",
             back: "Zurück", search_placeholder: "Stadt, Viertel oder Straße...", forecast_title: "10-Tage-Vorhersage", updating: "Aktualisierung...",
             error_gps: "GPS aktivieren", error_api: "API-Fehler", error_search: "Nichts gefunden",
-            wmo: { 0: "Klarer Himmel", 1: "Überwiegend klar", 2: "Teilweise bewölkt", 3: "Bedeckt", 45: "Nebel", 61: "Regen", 95: "Gewitter" },
-            yMap: { "clear": "klar", "partly-cloudy": "leicht bewölkt", "cloudy": "bewölkt", "overcast": "bedeckt", "light-rain": "leichter regen", "rain": "regen", "thunderstorm": "gewitter" }
+            wmo: { 0: "Klarer Himmel", 1: "Überwiegend klar", 2: "Teilweise bewölkt", 3: "Bedeckt", 45: "Nebel", 61: "Regen", 95: "Gewitter" }
         },
         it: {
             menu_location: "Mia posizione", menu_search: "Inserisci indirizzo", menu_color: "Colore", menu_lang: "Lingua", menu_theme: "Tema",
             back: "Indietro", search_placeholder: "Città, quartiere o via...", forecast_title: "Previsioni a 10 giorni", updating: "Aggiornamento...",
             error_gps: "Abilita il GPS", error_api: "Errore API", error_search: "Nessun risultato",
-            wmo: { 0: "Cielo sereno", 1: "Prevalentemente sereno", 2: "Parzialmente nuvoloso", 3: "Coperto", 45: "Nebbia", 61: "Pioggia", 95: "Temporale" },
-            yMap: { "clear": "sereno", "partly-cloudy": "parzialmente nuvoloso", "cloudy": "nuvoloso", "overcast": "coperto", "light-rain": "pioggia leggera", "rain": "pioggia", "thunderstorm": "temporale" }
+            wmo: { 0: "Cielo sereno", 1: "Prevalentemente sereno", 2: "Parzialmente nuvoloso", 3: "Coperto", 45: "Nebbia", 61: "Pioggia", 95: "Temporale" }
         }
     };
 
-    const KEYS = { yandex: '33cd5edb-414a-452f-9e7e-0dd0e851f159', accu: 'zpka_037982925b6d47d082834529273794bf_302056d7' };
-    let userCoords = { lat: 0, lon: 0 };
-    let currentLang = 'ru';
-    let currentSource = 'openmeteo';
-
-    // --- ОБНОВЛЕНИЕ АДРЕСА ---
     async function refreshAddress() {
         if (userCoords.lat === 0) return;
         try {
@@ -265,181 +263,4 @@
 
     function applyTranslations() {
         const t = i18n[currentLang];
-        document.querySelectorAll('[data-t]').forEach(el => {
-            const key = el.getAttribute('data-t');
-            if (t[key]) el.innerText = t[key];
-        });
-        document.getElementById('search-input').placeholder = t.search_placeholder;
-    }
-
-    function toggleMenu(e) {
-        e.stopPropagation();
-        ['palette', 'lang-menu', 'source-menu'].forEach(m => document.getElementById(m).classList.remove('active'));
-        document.getElementById('main-menu').classList.toggle('active');
-    }
-
-    function handleMenuAction(action) {
-        if (action !== 'theme' && action !== 'lang-menu' && action !== 'palette') document.getElementById('main-menu').classList.remove('active');
-        if (action === 'location') getLocation();
-        else if (action === 'search') { 
-            const sw = document.getElementById('search-wrapper'); sw.classList.toggle('active');
-            if(sw.classList.contains('active')) document.getElementById('search-input').focus();
-            document.getElementById('main-menu').classList.remove('active');
-        }
-        else if (action === 'palette') { document.getElementById('main-menu').classList.remove('active'); document.getElementById('palette').classList.add('active'); }
-        else if (action === 'lang-menu') { document.getElementById('main-menu').classList.remove('active'); document.getElementById('lang-menu').classList.add('active'); }
-        else if (action === 'theme') toggleTheme();
-    }
-
-    function backToMenu(id) { document.getElementById(id).classList.remove('active'); document.getElementById('main-menu').classList.add('active'); }
-
-    function formatAddress(addr) {
-        if (!addr) return i18n[currentLang].menu_location;
-        let parts = [];
-        const zone = addr.quarter || addr.suburb || addr.neighbourhood || addr.city_district || addr.place;
-        const street = addr.road || addr.pedestrian;
-        if (street) parts.push(street);
-        if (zone && zone !== street) parts.push(zone);
-        if (parts.length === 0) { const city = addr.city || addr.town || addr.village; if (city) parts.push(city); }
-        if (addr.country) parts.push(addr.country);
-        return parts.join(', ');
-    }
-
-    async function onSearchInput(val) {
-        const list = document.getElementById('suggestions');
-        if(val.trim().length < 2) { list.classList.remove('active'); return; }
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=10&addressdetails=1&accept-language=${currentLang}`);
-            const data = await res.json();
-            if(data && data.length > 0) {
-                list.innerHTML = data.map(item => `
-                    <div class="suggestion-item" onclick="selectSuggestion(${item.lat}, ${item.lon}, '${formatAddress(item.address).replace(/'/g, "\\'")}')">
-                        ${formatAddress(item.address)}
-                        <small style="display:block; opacity:0.6;">${item.address.city || item.address.state || ''}</small>
-                    </div>
-                `).join('');
-                list.classList.add('active');
-            }
-        } catch(e) {}
-    }
-
-    function selectSuggestion(lat, lon, name) {
-        userCoords.lat = lat; userCoords.lon = lon;
-        document.getElementById('current-city').innerText = name;
-        document.getElementById('coords-display').innerText = `${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`;
-        document.getElementById('suggestions').classList.remove('active');
-        document.getElementById('search-wrapper').classList.remove('active');
-        fetchWeather();
-    }
-
-    function handleSearch(e) { if(e.key === 'Enter') performSearch(); }
-    async function performSearch() {
-        const query = document.getElementById('search-input').value.trim();
-        if(!query) return;
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1&accept-language=${currentLang}`);
-        const data = await res.json();
-        if(data.length > 0) selectSuggestion(data[0].lat, data[0].lon, formatAddress(data[0].address));
-    }
-
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async pos => {
-                userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-                refreshAddress();
-                document.getElementById('coords-display').innerText = `${userCoords.lat.toFixed(4)}°N, ${userCoords.lon.toFixed(4)}°E`;
-                fetchWeather();
-            }, () => alert(i18n[currentLang].error_gps));
-        }
-    }
-
-    async function fetchWeather() {
-        document.getElementById('forecast').innerHTML = `<div class="loading-state"><div class="loader"></div><div class="loading-text">${i18n[currentLang].updating}</div></div>`;
-        try {
-            if (currentSource === 'openmeteo') await fetchOpenMeteo();
-            else if (currentSource === 'yandex') await fetchYandex();
-            else if (currentSource === 'accuweather') await fetchAccuWeather();
-        } catch (e) { document.getElementById('weather-desc').innerText = i18n[currentLang].error_api; }
-    }
-
-    async function fetchOpenMeteo() {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userCoords.lat}&longitude=${userCoords.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=10`;
-        const data = await (await fetch(url)).json();
-        const desc = i18n[currentLang].wmo[data.current.weather_code] || i18n[currentLang].wmo[0];
-        updateUI(Math.round(data.current.temperature_2m), desc, data.daily.time.map((t, i) => ({
-            day: new Intl.DateTimeFormat(currentLang, {weekday: 'short', day: 'numeric'}).format(new Date(t)),
-            max: Math.round(data.daily.temperature_2m_max[i]), min: Math.round(data.daily.temperature_2m_min[i]),
-            icon: codeToIcon(data.daily.weather_code[i])
-        })));
-    }
-
-    async function fetchYandex() {
-        const yLang = { ru:'ru_RU', en:'en_US', fr:'fr_FR', de:'de_DE', it:'it_IT' }[currentLang];
-        const res = await fetch(`https://api.weather.yandex.ru/v2/forecast?lat=${userCoords.lat}&lon=${userCoords.lon}&lang=${yLang}`, { headers: { 'X-Yandex-API-Key': KEYS.yandex }});
-        const data = await res.json();
-        const cond = i18n[currentLang].yMap[data.fact.condition] || data.fact.condition;
-        updateUI(data.fact.temp, cond, data.forecasts.map(f => ({
-            day: new Intl.DateTimeFormat(currentLang, {weekday: 'short', day: 'numeric'}).format(new Date(f.date)),
-            max: f.parts.day.temp_max, min: f.parts.night.temp_min, icon: "⛅"
-        })));
-    }
-
-    async function fetchAccuWeather() {
-        const langCode = { ru:'ru-ru', en:'en-us', fr:'fr-fr', de:'de-de', it:'it-it' }[currentLang];
-        const loc = await (await fetch(`https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=${KEYS.accu}&q=${userCoords.lat},${userCoords.lon}&language=${langCode}`)).json();
-        const cur = await (await fetch(`https://dataservice.accuweather.com/currentconditions/v1/${loc.Key}?apikey=${KEYS.accu}&language=${langCode}`)).json();
-        const fore = await (await fetch(`https://dataservice.accuweather.com/forecasts/v1/daily/5day/${loc.Key}?apikey=${KEYS.accu}&metric=true&language=${langCode}`)).json();
-        updateUI(Math.round(cur[0].Temperature.Metric.Value), cur[0].WeatherText, fore.DailyForecasts.map(f => ({
-            day: new Intl.DateTimeFormat(currentLang, {weekday: 'short', day: 'numeric'}).format(new Date(f.Date)),
-            max: Math.round(f.Temperature.Maximum.Value), min: Math.round(f.Temperature.Minimum.Value), icon: "⛅"
-        })));
-    }
-
-    function codeToIcon(code) { return code <= 1 ? "☀️" : code <= 3 ? "⛅" : code <= 48 ? "🌫️" : code <= 67 ? "🌧️" : "⛈️"; }
-
-    function updateUI(temp, desc, forecast) {
-        document.getElementById('current-temp').innerText = `${temp}°`;
-        document.getElementById('weather-desc').innerText = desc.charAt(0).toUpperCase() + desc.slice(1);
-        document.getElementById('forecast').innerHTML = forecast.map(f => `<div class="forecast-item"><div class="forecast-info"><span class="forecast-icon">${f.icon}</span><span class="forecast-date">${f.day}</span></div><span><b>${f.max}°</b> / <span style="opacity:0.5">${f.min}°</span></span></div>`).join('');
-    }
-
-    function initSettings() {
-        currentLang = localStorage.getItem('weather-lang') || 'ru';
-        const savedTheme = localStorage.getItem('weather-theme') || 'light';
-        const savedColor = localStorage.getItem('weather-accent') || '#4285f4';
-        currentSource = localStorage.getItem('weather-source') || 'openmeteo';
-        document.body.setAttribute('data-theme', savedTheme);
-        document.getElementById('menu-theme-icon').innerText = savedTheme === 'light' ? '☀️' : '🌙';
-        const colors = ['#FF0000', '#D4FF00', '#FF7B00', '#FFDD00', '#11FF00', '#00FFEE', '#001EFF', '#AE00FF', '#FF004C', '#000000', '#FFFFFF'];
-        document.getElementById('colors-grid').innerHTML = colors.map(c => `<div class="color-dot" style="background:${c}" onclick="setAccent('${c}')"></div>`).join('') + `<div class="custom-color-wrapper"><input type="color" id="custom-color-btn" oninput="setAccent(this.value)"></div>`;
-        const names = { 'openmeteo': 'Open-Meteo', 'yandex': 'Яндекс Погода', 'accuweather': 'AccuWeather' };
-        document.getElementById('source-display').innerText = names[currentSource] || 'Open-Meteo';
-        applyTranslations();
-        setAccent(savedColor, false);
-    }
-
-    function toggleTheme() {
-        const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-        document.body.setAttribute('data-theme', next);
-        document.getElementById('menu-theme-icon').innerText = next === 'light' ? '☀️' : '🌙';
-        localStorage.setItem('weather-theme', next);
-        setAccent(localStorage.getItem('weather-accent') || '#4285f4', false);
-    }
-
-    function setAccent(color, save = true) {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        document.documentElement.style.setProperty('--primary-container', color + (isDark ? '40' : '26'));
-        document.documentElement.style.setProperty('--primary-seed', color);
-        if(save) localStorage.setItem('weather-accent', color);
-    }
-
-    function toggleSourceMenu(e) { e.stopPropagation(); document.getElementById('source-menu').classList.toggle('active'); }
-    function selectSource(id, name) { currentSource = id; document.getElementById('source-display').innerText = name; document.getElementById('source-menu').classList.remove('active'); localStorage.setItem('weather-source', id); fetchWeather(); }
-
-    window.onclick = (e) => {
-        if (!e.target.closest('.menu-container')) { ['main-menu', 'palette', 'lang-menu', 'source-menu'].forEach(id => document.getElementById(id).classList.remove('active')); }
-    };
-
-    window.onload = () => { initSettings(); getLocation(); };
-</script>
-</body>
-</html>
+        document.querySelectorAll('[data-t]').forEach(el =>
